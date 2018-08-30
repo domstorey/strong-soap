@@ -34,7 +34,7 @@ class WSDL {
     this.WSDL_CACHE = (options || {}).WSDL_CACHE || {};
     this._initializeOptions(options);
   }
-
+  
   load(callback) {
     var self = this;
     var definition = this.content;
@@ -50,7 +50,7 @@ class WSDL {
     // register that this WSDL has started loading
     self.isLoaded = true;
 
-    process.nextTick(function() {
+    var loadUpSchemas = function() {
       try {
         fromFunc.call(self, definition);
       } catch (e) {
@@ -104,8 +104,13 @@ class WSDL {
         self.xmlnsInEnvelope = self._xmlnsMap();
         callback(err, self);
       });
+    }
 
-    });
+    if (self.options.forceSyncLoad) {
+      loadUpSchemas()
+    } else {
+      process.nextTick(loadUpSchemas);
+    }
   }
 
   _initializeOptions(options) {
@@ -150,6 +155,8 @@ class WSDL {
     if (options.NTLMSecurity) {
       this.options.NTLMSecurity = options.NTLMSecurity;
     }
+
+    this.options.forceSyncLoad = options.forceSyncLoad
   }
 
   _processNextInclude(includes, callback) {
